@@ -1,0 +1,88 @@
+import csv
+from openpyxl import Workbook
+from openpyxl.styles import PatternFill, Border, Side
+
+file_name = input("File name: ")
+
+with open(file_name, mode='r', newline='') as file:
+    reader=csv.reader(file)
+
+    wb = Workbook()
+    ex = wb.active
+
+    extrarow=0
+    for csvrow, val in enumerate(reader, start=1):
+        if val[0]:
+            for csvcol, value in enumerate(val, start=1):
+                if csvcol>15:
+                    csvcol+=2
+                if csvcol==19 and value.find(";")!=-1:
+                    split = value.split(";")
+                    ex.cell(row=csvrow+extrarow, column=csvcol, value=split[0])
+                    for i in range(1, len(split)):
+                        extrarow+=1
+                        for o in range(28):
+                            if o == 18:
+                                ex.cell(row=csvrow+extrarow, column=o+1, value=split[i])
+                            else:
+                                ex.cell(row=csvrow+extrarow, column=o+1, value=None)
+                elif csvcol==23 and value and csvrow!=1:
+                    extrarow+=1
+                    for i in range(28):
+                        if i == 18:
+                            ex.cell(row=csvrow+extrarow, column=i+1, value=value)
+                        else:
+                            ex.cell(row=csvrow+extrarow, column=i+1, value=None)
+                elif csvcol==25 and value and csvrow!=1:
+                    extrarow+=1
+                    for i in range(28):
+                        if i == 18:
+                            ex.cell(row=csvrow+extrarow, column=i+1, value=value)
+                        else:
+                            ex.cell(row=csvrow+extrarow, column=i+1, value=None)
+                else: 
+                    ex.cell(row=csvrow+extrarow, column=csvcol, value=value)
+        else:
+            extrarow-=1
+    
+    header_fill = PatternFill(start_color="87CEFB", end_color="87CEFB", fill_type = "solid")
+    white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type = "solid")
+    grey_fill = PatternFill(start_color="aaaaaa", end_color="aaaaaa", fill_type = "solid")
+    highlight_fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    border = Border(
+        top=Side(border_style="thin", color="000000"),
+        left=Side(border_style="thin", color="000000"),
+        bottom=Side(border_style="thin", color="000000"),
+        right=Side(border_style="thin", color="000000")
+    )
+    color=white_fill
+    for cell in ex[1]:
+        cell.fill = header_fill
+        cell.border=border
+        if cell.column==16:
+            cell.value="Deduction per person"
+        elif cell.column==17:
+            cell.value="Notes"
+    row_count=0
+    track_sec=0
+    for row in ex:
+        row_count+=1
+        if row==ex[1]:
+            continue
+        if row[0].value:
+            if color==white_fill:
+                color=grey_fill
+            else:
+                color=white_fill
+            for i in range(track_sec):
+                ex.cell(row=row_count-i-1, column=16, value=f"=$O{row_count-track_sec}/{track_sec}")
+            track_sec=0
+        for cell in row:
+            if cell.column==16 or cell.column==17:
+                cell.fill = highlight_fill
+            else:
+                cell.fill = color
+            cell.border=border
+        track_sec+=1
+    wb.save("output.xlsx")
+
